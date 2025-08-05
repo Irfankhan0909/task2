@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Cloning') {
+            steps {
+                git 'https://github.com/Irfankhan0909/task2.git'
+            }
+        }
+
+        stage('Build Stage') {
+            steps {
+                sh '''
+                    cd /var/lib/jenkins/workspace/task2
+                    sudo docker build -t irfan890908/task2:latest .
+                '''
+            }
+        }
+
+        stage('Docker Login Stage') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'efa4932c-e999-438d-9fe4-29686b8e78b5',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh 'echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin'
+                }
+            }
+        }
+
+        stage('Push Image to Docker Hub') {
+            steps {
+                sh 'docker push irfan890908/task2:latest'
+            }
+        }
+
+        stage('Deploy the Image in Docker Engine') {
+            steps {
+                sh 'docker run -itd --name work2 -p 61:80 irfan890908/task2:latest'
+            }
+        }
+    }
+}
